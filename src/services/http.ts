@@ -19,13 +19,24 @@ function showToastOnce(key: string, message: string) {
 }
 
 // /api/auth/google 전용 인스턴스 (쿠키 불필요, body json)
-export const googleAuthClient = axios.create({ baseURL: API_BASE_URL || undefined, headers: { 'Content-Type': 'application/json' } });
+export const googleAuthClient = axios.create({
+    baseURL: API_BASE_URL || undefined,
+    headers: { 'Content-Type': 'application/json' },
+});
 
 // /api/auth/refresh 전용 인스턴스 (쿠키 필요 withCredentials)
-export const refreshClient = axios.create({ baseURL: API_BASE_URL || undefined, withCredentials: true, headers: { 'Content-Type': 'application/json' } });
+export const refreshClient = axios.create({
+    baseURL: API_BASE_URL || undefined,
+    withCredentials: true,
+    headers: { 'Content-Type': 'application/json' },
+});
 
 // 일반 API 인스턴스
-export const apiClient: AxiosInstance = axios.create({ baseURL: API_BASE_URL || undefined, withCredentials: true, headers: { 'Content-Type': 'application/json' } });
+export const apiClient: AxiosInstance = axios.create({
+    baseURL: API_BASE_URL || undefined,
+    withCredentials: true,
+    headers: { 'Content-Type': 'application/json' },
+});
 
 // refresh 진행 중 중복 호출 방지
 let refreshPromise: Promise<string | null> | null = null;
@@ -34,7 +45,7 @@ async function requestRefresh(): Promise<string | null> {
     if (!refreshPromise) {
         refreshPromise = (async () => {
             try {
-            const res = await refreshClient.post('/api/auth/refresh');
+                const res = await refreshClient.post('/api/auth/refresh');
                 const newAccess = res.data?.accessToken as string | undefined;
                 if (newAccess) {
                     useAuthStore.getState().setAccessToken(newAccess);
@@ -102,13 +113,13 @@ apiClient.interceptors.response.use(
 
 // /me API 래퍼
 export async function fetchMe() {
-        const res = await apiClient.get('/api/me');
+    const res = await apiClient.get('/api/me');
     return res.data;
 }
 
 // google auth 교환 함수
 export async function exchangeGoogleIdToken(idToken: string) {
-        const res = await googleAuthClient.post('/api/auth/google', { idToken });
+    const res = await googleAuthClient.post('/api/auth/google', { idToken });
     const accessToken = res.data?.accessToken as string | undefined;
     if (accessToken) {
         useAuthStore.getState().setAccessToken(accessToken);
