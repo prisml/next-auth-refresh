@@ -4,7 +4,8 @@ import { safeLogout } from '@/utils/safeLogout';
 import { queryClient } from '@/lib/queryClient';
 import toast from 'react-hot-toast';
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:3000';
+// 동일 Next.js 앱의 Route Handlers(mock API)를 사용하므로 baseURL 생략(상대경로) 가능
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || '';
 
 // 중복 토스트 방지
 let lastToastKey: string | null = null;
@@ -17,25 +18,14 @@ function showToastOnce(key: string, message: string) {
     }, 2000);
 }
 
-// /auth/google 전용 인스턴스 (쿠키 불필요, body json)
-export const googleAuthClient = axios.create({
-    baseURL: API_BASE_URL,
-    headers: { 'Content-Type': 'application/json' },
-});
+// /api/auth/google 전용 인스턴스 (쿠키 불필요, body json)
+export const googleAuthClient = axios.create({ baseURL: API_BASE_URL || undefined, headers: { 'Content-Type': 'application/json' } });
 
-// /auth/refresh 전용 인스턴스 (쿠키 필요 withCredentials)
-export const refreshClient = axios.create({
-    baseURL: API_BASE_URL,
-    withCredentials: true,
-    headers: { 'Content-Type': 'application/json' },
-});
+// /api/auth/refresh 전용 인스턴스 (쿠키 필요 withCredentials)
+export const refreshClient = axios.create({ baseURL: API_BASE_URL || undefined, withCredentials: true, headers: { 'Content-Type': 'application/json' } });
 
 // 일반 API 인스턴스
-export const apiClient: AxiosInstance = axios.create({
-    baseURL: API_BASE_URL,
-    withCredentials: true,
-    headers: { 'Content-Type': 'application/json' },
-});
+export const apiClient: AxiosInstance = axios.create({ baseURL: API_BASE_URL || undefined, withCredentials: true, headers: { 'Content-Type': 'application/json' } });
 
 // refresh 진행 중 중복 호출 방지
 let refreshPromise: Promise<string | null> | null = null;
@@ -44,7 +34,7 @@ async function requestRefresh(): Promise<string | null> {
     if (!refreshPromise) {
         refreshPromise = (async () => {
             try {
-                const res = await refreshClient.post('/auth/refresh');
+            const res = await refreshClient.post('/api/auth/refresh');
                 const newAccess = res.data?.accessToken as string | undefined;
                 if (newAccess) {
                     useAuthStore.getState().setAccessToken(newAccess);
@@ -112,13 +102,13 @@ apiClient.interceptors.response.use(
 
 // /me API 래퍼
 export async function fetchMe() {
-    const res = await apiClient.get('/me');
+        const res = await apiClient.get('/api/me');
     return res.data;
 }
 
 // google auth 교환 함수
 export async function exchangeGoogleIdToken(idToken: string) {
-    const res = await googleAuthClient.post('/auth/google', { idToken });
+        const res = await googleAuthClient.post('/api/auth/google', { idToken });
     const accessToken = res.data?.accessToken as string | undefined;
     if (accessToken) {
         useAuthStore.getState().setAccessToken(accessToken);
@@ -130,7 +120,7 @@ export async function exchangeGoogleIdToken(idToken: string) {
 
 export async function logoutRequest() {
     try {
-        await apiClient.post('/auth/logout');
+        await apiClient.post('/api/auth/logout');
     } finally {
         await safeLogout('/?reason=logged_out');
     }
